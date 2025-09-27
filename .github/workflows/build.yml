@@ -11,6 +11,11 @@ on:
       - "packages.yaml"
       - "scripts/**"
       - ".github/workflows/build.yml"
+  workflow_run:
+    workflows: ["Update Package Versions"]
+    types:
+      - completed
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -21,6 +26,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     container:
       image: archlinux:latest
       options: --privileged
