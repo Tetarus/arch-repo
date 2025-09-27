@@ -31,7 +31,7 @@ This is a custom Arch Linux package repository that automatically builds and dis
 #### Core Files
 
 - `packages.yaml`: Central metadata file containing all package information
-- `requirements.txt`: Python dependencies for the new system
+- `requirements.txt`: Python dependencies (PyYAML, Jinja2) for package generation scripts
 
 #### Scripts (`scripts/`)
 
@@ -51,7 +51,10 @@ This is a custom Arch Linux package repository that automatically builds and dis
 ### Package Management
 
 ```bash
-# Install Python dependencies
+# Install Python dependencies (Arch Linux)
+sudo pacman -S python-yaml python-jinja
+
+# Or install with pip
 pip install -r requirements.txt
 
 # Check for version updates

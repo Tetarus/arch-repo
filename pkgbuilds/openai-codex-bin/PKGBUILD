@@ -8,19 +8,9 @@ url="https://github.com/openai/codex"
 license=('Apache-2.0')
 provides=('codex')
 conflicts=('codex')
-depends=(
-  'gcc-libs'
-  'glibc'
-  'openssl'
-)
-optdepends=(
-  'git: version control support'
-  'ripgrep: fast file searching'
-)
-makedepends=(
-  'curl'
-  'jq'
-)
+depends=('gcc-libs' 'glibc' 'openssl')
+optdepends=('git: version control support' 'ripgrep: fast file searching')
+makedepends=('curl' 'jq')
 options=(!debug)
 
 prepare() {

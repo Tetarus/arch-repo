@@ -44,8 +44,8 @@ if ! command -v makepkg &> /dev/null; then
 fi
 
 # Check if Python dependencies are installed
-if ! python3 -c "import yaml" &> /dev/null; then
-    error "Python dependencies not installed. Please run: pip install -r requirements.txt"
+if ! python3 -c "import yaml, jinja2" &> /dev/null; then
+    error "Python dependencies not installed. Please install python-yaml and python-jinja packages or run: pip install -r requirements.txt"
     exit 1
 fi
 

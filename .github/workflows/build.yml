@@ -45,10 +45,10 @@ jobs:
         run: |
           # Update system and install base-devel
           pacman -Syu --noconfirm
-          pacman -S --noconfirm base-devel git sudo python python-yaml
+          pacman -S --noconfirm base-devel git sudo python python-yaml python-jinja
 
-          # Python dependencies installed via pacman (python-yaml)
-          # No need for pip since PyYAML is available in Arch repos
+          # Python dependencies installed via pacman (python-yaml python-jinja)
+          # No need for pip since PyYAML and Jinja2 are available in Arch repos
 
           # Generate PKGBUILDs from metadata
           python scripts/generate_pkgbuilds.py
@@ -89,8 +89,8 @@ jobs:
 
       - name: Install required tools
         run: |
-          pacman -Syu --noconfirm pacman git python python-yaml
-          # Need Python and PyYAML for generate_index.py script
+          pacman -Syu --noconfirm pacman git python python-yaml python-jinja
+          # Need Python, PyYAML and Jinja2 for generate scripts
 
       - name: Download all package artifacts
         uses: actions/download-artifact@v4
