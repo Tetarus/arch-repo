@@ -1,2 +1,3 @@
 # Python dependencies for repository scripts
 PyYAML>=6.0
+Jinja2>=3.0

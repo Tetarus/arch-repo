@@ -1,0 +1,49 @@
+# Maintainer: Tetarus
+pkgname={{ package_name }}
+pkgver={{ version }}
+pkgrel={{ pkgrel }}
+pkgdesc="{{ description }}"
+arch=({% for arch in architectures %}'{{ arch }}'{% if not loop.last %} {% endif %}{% endfor %})
+url="{{ url }}"
+license=('{{ license }}')
+{% if provides -%}
+provides=({% for item in provides %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if conflicts -%}
+conflicts=({% for item in conflicts %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if depends -%}
+depends=({% for item in depends %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if optdepends -%}
+optdepends=({% for item in optdepends %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if makedepends -%}
+makedepends=({% for item in makedepends %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+options=(!debug)
+
+prepare() {
+  cd "${srcdir}"
+
+  local ver="${pkgver}"
+  local tag="{{ upstream.tag_prefix }}${ver}"
+
+  local url="$(curl -fsSL "https://api.github.com/repos/{{ upstream.repo }}/releases/tags/${tag}" \
+    | jq -r '.assets[] | select(.name | contains("{{ upstream.asset_pattern }}")) | .browser_download_url' \
+    | head -n1)"
+
+  if [[ -z "$url" ]]; then
+    error "Failed to find download URL for version ${ver}"
+    return 1
+  fi
+
+  curl -fL "$url" -o "codex.tar.gz"
+  tar -xzf "codex.tar.gz"
+}
+
+package() {
+  cd "${srcdir}"
+
+  install -Dm755 "codex-{{ upstream.asset_pattern }}" "$pkgdir/usr/bin/codex"
+}

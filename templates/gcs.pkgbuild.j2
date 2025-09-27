@@ -1,0 +1,89 @@
+# Maintainer: Tetarus
+pkgname={{ package_name }}
+pkgver={{ version }}
+pkgrel={{ pkgrel }}
+pkgdesc="{{ description }}"
+arch=({% for arch in architectures %}'{{ arch }}'{% if not loop.last %} {% endif %}{% endfor %})
+url="{{ url }}"
+license=('{{ license }}')
+{% if depends -%}
+depends=({% for item in depends %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if provides -%}
+provides=({% for item in provides %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+{% if conflicts -%}
+conflicts=({% for item in conflicts %}'{{ item }}'{% if not loop.last %} {% endif %}{% endfor %})
+{% endif -%}
+source=()
+sha256sums=()
+options=(!strip !debug)
+
+_gcs_bucket="{{ upstream.bucket_url }}"
+
+prepare() {
+  cd "$srcdir"
+
+  # Get current version
+  local version="${pkgver}"
+  msg "Downloading {{ package_name.title() }} version $version"
+{% if upstream.checksum_verification %}
+
+  # Download manifest to get checksum
+  curl -fsSL -o manifest.json "${_gcs_bucket}/${version}/manifest.json"
+
+  # Extract checksum for {{ upstream.platform_name }} platform
+  local expected_checksum
+  if command -v jq >/dev/null 2>&1; then
+    expected_checksum=$(jq -r '.platforms["{{ upstream.platform_name }}"].checksum // empty' manifest.json)
+  else
+    # Fallback: extract checksum using bash regex
+    local json=$(cat manifest.json | tr -d '\n\r\t' | sed 's/ \+/ /g')
+    if [[ $json =~ \"{{ upstream.platform_name }}\"[^}]*\"checksum\"[[:space:]]*:[[:space:]]*\"([a-f0-9]{64})\" ]]; then
+      expected_checksum="${BASH_REMATCH[1]}"
+    fi
+  fi
+
+  if [ -z "$expected_checksum" ] || [[ ! "$expected_checksum" =~ ^[a-f0-9]{64}$ ]]; then
+    error "Failed to extract valid checksum for {{ upstream.platform_name }} platform"
+    return 1
+  fi
+
+  msg "Expected checksum: $expected_checksum"
+
+  # Download the binary
+  curl -fsSL -o "claude" "${_gcs_bucket}/${version}/{{ upstream.platform_name }}/claude"
+
+  # Verify checksum
+  local actual_checksum=$(sha256sum claude | cut -d' ' -f1)
+  if [ "$actual_checksum" != "$expected_checksum" ]; then
+    error "Checksum verification failed"
+    error "Expected: $expected_checksum"
+    error "Actual:   $actual_checksum"
+    return 1
+  fi
+
+  msg "Checksum verification successful"
+{% else %}
+
+  # Download the binary
+  curl -fsSL -o "claude" "${_gcs_bucket}/${version}/{{ upstream.platform_name }}/claude"
+{% endif %}
+
+  chmod +x "claude"
+}
+
+package() {
+  cd "$srcdir"
+
+  # Install the binary
+  install -Dm755 "claude" "$pkgdir/usr/bin/claude"
+{% if license == 'custom' %}
+
+  # Create a simple license file since it's proprietary
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/licenses/$pkgname/LICENSE" << 'EOF'
+{{ package_name.replace('-bin', '').title() }} is proprietary software.
+For terms of service, visit: {{ url }}
+EOF
+{% endif %}
+}
