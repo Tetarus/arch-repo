@@ -1,0 +1,49 @@
+# Maintainer: Tetarus
+pkgname=openai-codex-bin
+pkgver=0.42.0
+pkgrel=1
+pkgdesc="Lightweight coding agent that runs in your terminal (binary release)"
+arch=('x86_64')
+url="https://github.com/openai/codex"
+license=('Apache-2.0')
+provides=('codex')
+conflicts=('codex')
+depends=(
+  'gcc-libs'
+  'glibc'
+  'openssl'
+)
+optdepends=(
+  'git: version control support'
+  'ripgrep: fast file searching'
+)
+makedepends=(
+  'curl'
+  'jq'
+)
+options=(!debug)
+
+prepare() {
+  cd "${srcdir}"
+
+  local ver="${pkgver}"
+  local tag="rust-v${ver}"
+
+  local url="$(curl -fsSL "https://api.github.com/repos/openai/codex/releases/tags/${tag}" \
+    | jq -r '.assets[] | select(.name | contains("x86_64-unknown-linux-gnu")) | .browser_download_url' \
+    | head -n1)"
+
+  if [[ -z "$url" ]]; then
+    error "Failed to find download URL for version ${ver}"
+    return 1
+  fi
+
+  curl -fL "$url" -o "codex.tar.gz"
+  tar -xzf "codex.tar.gz"
+}
+
+package() {
+  cd "${srcdir}"
+
+  install -Dm755 "codex-x86_64-unknown-linux-gnu" "$pkgdir/usr/bin/codex"
+}

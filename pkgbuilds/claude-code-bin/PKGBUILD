@@ -1,0 +1,75 @@
+# Maintainer: Tetarus
+pkgname=claude-code-bin
+pkgver=1.0.128
+pkgrel=1
+pkgdesc="Claude Code - Interactive CLI for Anthropic's Claude AI assistant"
+arch=('x86_64')
+url="https://claude.ai/code"
+license=('custom')
+depends=('glibc')
+provides=('claude')
+conflicts=('claude')
+source=()
+sha256sums=()
+options=(!strip !debug)
+
+_gcs_bucket="https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases"
+
+prepare() {
+  cd "$srcdir"
+
+  # Get current version
+  local version="${pkgver}"
+  msg "Downloading Claude-Code-Bin version $version"
+
+  # Download manifest to get checksum
+  curl -fsSL -o manifest.json "${_gcs_bucket}/${version}/manifest.json"
+
+  # Extract checksum for linux-x64 platform
+  local expected_checksum
+  if command -v jq >/dev/null 2>&1; then
+    expected_checksum=$(jq -r '.platforms["linux-x64"].checksum // empty' manifest.json)
+  else
+    # Fallback: extract checksum using bash regex
+    local json=$(cat manifest.json | tr -d '\n\r\t' | sed 's/ \+/ /g')
+    if [[ $json =~ \"linux-x64\"[^}]*\"checksum\"[[:space:]]*:[[:space:]]*\"([a-f0-9]{64})\" ]]; then
+      expected_checksum="${BASH_REMATCH[1]}"
+    fi
+  fi
+
+  if [ -z "$expected_checksum" ] || [[ ! "$expected_checksum" =~ ^[a-f0-9]{64}$ ]]; then
+    error "Failed to extract valid checksum for linux-x64 platform"
+    return 1
+  fi
+
+  msg "Expected checksum: $expected_checksum"
+
+  # Download the binary
+  curl -fsSL -o "claude" "${_gcs_bucket}/${version}/linux-x64/claude"
+
+  # Verify checksum
+  local actual_checksum=$(sha256sum claude | cut -d' ' -f1)
+  if [ "$actual_checksum" != "$expected_checksum" ]; then
+    error "Checksum verification failed"
+    error "Expected: $expected_checksum"
+    error "Actual:   $actual_checksum"
+    return 1
+  fi
+
+  msg "Checksum verification successful"
+
+  chmod +x "claude"
+}
+
+package() {
+  cd "$srcdir"
+
+  # Install the binary
+  install -Dm755 "claude" "$pkgdir/usr/bin/claude"
+
+  # Create a simple license file since it's proprietary
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/licenses/$pkgname/LICENSE" << 'EOF'
+Claude-Code is proprietary software.
+For terms of service, visit: https://claude.ai/code
+EOF
+}
