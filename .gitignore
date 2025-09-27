@@ -31,8 +31,6 @@ x86_64/index.html
 # Local test builds
 test-builds/
 
-# Generated PKGBUILDs (generated from packages.yaml)
-pkgbuilds/*/PKGBUILD
 
 # Python cache
 __pycache__/
