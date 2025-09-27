@@ -1,0 +1,142 @@
+name: Build Arch Packages
+
+on:
+  push:
+    paths:
+      - "packages.yaml"
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+  pull_request:
+    paths:
+      - "packages.yaml"
+      - "scripts/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+
+    strategy:
+      matrix:
+        package: [openai-codex-bin, claude-code-bin]
+      fail-fast: false
+      max-parallel: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Arch Linux build environment
+        run: |
+          # Update system and install base-devel
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git sudo python python-yaml
+
+          # Python dependencies installed via pacman (python-yaml)
+          # No need for pip since PyYAML is available in Arch repos
+
+          # Generate PKGBUILDs from metadata
+          python scripts/generate_pkgbuilds.py
+
+          # Create build user (makepkg cannot run as root)
+          useradd -m -G wheel -s /bin/bash builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+          # Fix permissions
+          chown -R builder:builder .
+
+      - name: Build package ${{ matrix.package }}
+        run: |
+          cd pkgbuilds/${{ matrix.package }}
+
+          # Build package as builder user
+          sudo -u builder makepkg -s --noconfirm --needed
+
+          # List generated packages
+          ls -la *.pkg.tar.zst
+
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-package
+          path: pkgbuilds/${{ matrix.package }}/*.pkg.tar.zst
+          retention-days: 30
+
+  repository:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install required tools
+        run: |
+          pacman -Syu --noconfirm pacman git python python-yaml
+          # Need Python and PyYAML for generate_index.py script
+
+      - name: Download all package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare repository directory
+        run: |
+          mkdir -p x86_64
+          # Move all packages to repository directory
+          find artifacts/ -name "*.pkg.tar.zst" -exec mv {} x86_64/ \;
+
+          # List packages
+          ls -la x86_64/
+
+      - name: Create repository database
+        run: |
+          cd x86_64
+
+          # Create repository database
+          repo-add tetarus-repo.db.tar.xz *.pkg.tar.zst
+
+          # Create symlinks for easier access
+          ln -sf tetarus-repo.db.tar.xz tetarus-repo.db
+          ln -sf tetarus-repo.files.tar.xz tetarus-repo.files
+
+          # List repository files
+          ls -la
+
+      - name: Generate index page
+        run: |
+          # Generate index.html from template and package metadata
+          python scripts/generate_index.py
+
+          # Verify index was generated
+          ls -la x86_64/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./x86_64
+
+  deploy:
+    needs: repository
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

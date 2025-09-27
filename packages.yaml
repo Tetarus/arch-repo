@@ -1,0 +1,53 @@
+# Arch Repository Package Metadata
+# This file serves as the single source of truth for all packages
+
+packages:
+  openai-codex-bin:
+    description: "Lightweight coding agent that runs in your terminal (binary release)"
+    license: "Apache-2.0"
+    url: "https://github.com/openai/codex"
+    version: "0.42.0"
+    pkgrel: 1
+    architectures:
+      - x86_64
+    depends:
+      - gcc-libs
+      - glibc
+      - openssl
+    optdepends:
+      - "git: version control support"
+      - "ripgrep: fast file searching"
+    makedepends:
+      - curl
+      - jq
+    provides:
+      - codex
+    conflicts:
+      - codex
+    upstream:
+      type: github
+      repo: openai/codex
+      tag_prefix: rust-v
+      asset_pattern: "x86_64-unknown-linux-gnu"
+      checksum_verification: false
+
+  claude-code-bin:
+    description: "Claude Code - Interactive CLI for Anthropic's Claude AI assistant"
+    license: "custom"
+    url: "https://claude.ai/code"
+    version: "1.0.127"
+    pkgrel: 1
+    architectures:
+      - x86_64
+    depends:
+      - glibc
+    provides:
+      - claude
+    conflicts:
+      - claude
+    upstream:
+      type: gcs
+      bucket_url: "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases"
+      version_endpoint: "stable"
+      platform_name: "linux-x64"
+      checksum_verification: true

@@ -1,0 +1,84 @@
+name: Update Package Versions
+
+on:
+  schedule:
+    # Run daily at 6:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-versions:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python environment
+        run: |
+          # Install Python dependencies
+          pip install -r requirements.txt
+
+      - name: Configure git
+        run: |
+          # Configure git for commits
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update package versions
+        run: |
+          echo "Updating package versions..."
+          python3 scripts/update_versions.py
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet packages.yaml; then
+            echo "No version changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Version changes detected:"
+            git diff --stat packages.yaml
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate updated PKGBUILDs
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          echo "Generating PKGBUILDs from updated metadata..."
+          python3 scripts/generate_pkgbuilds.py
+
+      - name: Commit and push changes
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          # Stage metadata and generated PKGBUILDs
+          git add packages.yaml
+          git add pkgbuilds/*/PKGBUILD
+
+          # Extract updated package names from the diff
+          UPDATED_PACKAGES=$(git diff HEAD~1 packages.yaml | grep '^+.*version:' | wc -l)
+          if [[ $UPDATED_PACKAGES -gt 0 ]]; then
+            # Create a more descriptive commit message
+            git commit -m "chore: update package versions and regenerate PKGBUILDs
+
+🤖 Generated with new metadata-driven system"
+          else
+            git commit -m "chore: update package metadata and PKGBUILDs"
+          fi
+
+          # Push changes
+          git push
+
+      - name: Summary
+        run: |
+          if [[ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]]; then
+            echo "✅ Package versions updated and pushed"
+            echo "The build workflow will automatically trigger for updated packages"
+          else
+            echo "ℹ️ All packages are up to date"
+          fi

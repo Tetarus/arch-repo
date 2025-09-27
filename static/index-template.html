@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetarus Arch Repository</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --accent: #238636;
+            --accent-hover: #2ea043;
+            --border: #30363d;
+            --warning: #d29922;
+            --error: #f85149;
+            --blue: #58a6ff;
+            --purple: #a5a3ff;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #ffffff;
+            --text-primary: #24292f;
+            --text-secondary: #656d76;
+            --accent: #1a7f37;
+            --accent-hover: #1a7f37;
+            --border: #d0d7de;
+            --warning: #bf8700;
+            --error: #cf222e;
+            --blue: #0969da;
+            --purple: #8250df;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .quick-setup {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-setup h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .command-block {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            position: relative;
+            font-family: inherit;
+            overflow-x: auto;
+        }
+
+        .command-block code {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            white-space: pre;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .command-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .packages-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .package-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .package-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .package-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .package-version {
+            background: var(--accent);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .package-desc {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .package-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .package-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .package-install {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            position: relative;
+        }
+
+        .package-install .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .package-install:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .package-install .copy-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .package-install code {
+            color: var(--blue);
+            font-size: 0.9rem;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .package-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            transition: top 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+        <span id="theme-icon">🌙</span>
+    </button>
+
+    <div class="notification" id="notification">Copied to clipboard!</div>
+
+    <div class="container">
+        <header class="header">
+            <h1>🏗️ Tetarus Arch Repository</h1>
+            <p>Custom Arch Linux packages with automated builds</p>
+        </header>
+
+        <section class="quick-setup">
+            <h2>🚀 Quick Setup</h2>
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">Add this repository to your system:</p>
+
+            <p style="margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">Add repository to pacman.conf:</p>
+            <div class="command-block" data-command="echo '[tetarus-repo]
+SigLevel = Optional TrustAll
+Server = https://tetarus.github.io/arch-repo' | sudo tee -a /etc/pacman.conf">
+                <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+                <code>echo '[tetarus-repo]
+SigLevel = Optional TrustAll
+Server = https://tetarus.github.io/arch-repo' | sudo tee -a /etc/pacman.conf</code>
+            </div>
+
+            <p style="margin-bottom: 0.5rem; margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">Sync package databases:</p>
+            <div class="command-block" data-command="sudo pacman -Sy">
+                <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+                <code>sudo pacman -Sy</code>
+            </div>
+        </section>
+
+        <section class="packages-section">
+            <h2>📦 Available Packages</h2>
+            <div class="packages-grid" id="packages-grid">
+                <!-- Packages will be injected here -->
+                {{PACKAGES_PLACEHOLDER}}
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>
+                Built with ❤️ •
+                <a href="https://github.com/tetarus/arch-repo">View on GitHub</a> •
+                Last updated: <span id="last-updated">{{LAST_UPDATED}}</span>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+
+            if (html.getAttribute('data-theme') === 'light') {
+                html.removeAttribute('data-theme');
+                icon.textContent = '🌙';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                icon.textContent = '☀️';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function copyCommand(btn) {
+            const commandBlock = btn.closest('.command-block') || btn.closest('.package-install');
+            const command = commandBlock.dataset.command || btn.nextElementSibling.textContent;
+            navigator.clipboard.writeText(command).then(() => {
+                showNotification();
+            });
+        }
+
+        function showNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.getElementById('theme-icon').textContent = '☀️';
+        }
+
+        // Format relative time
+        function formatRelativeTime(timestamp) {
+            const now = Math.floor(Date.now() / 1000);
+            const diff = now - timestamp;
+
+            if (diff < 60) return `${diff}s ago`;
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`;
+            if (diff < 31536000) return `${Math.floor(diff / 2592000)}mo ago`;
+            return `${Math.floor(diff / 31536000)}y ago`;
+        }
+
+        // Update package times
+        function updatePackageTimes() {
+            const timeElements = document.querySelectorAll('.package-time');
+            timeElements.forEach(element => {
+                const timestamp = parseInt(element.dataset.timestamp);
+                if (timestamp) {
+                    const relativeTime = formatRelativeTime(timestamp);
+                    element.innerHTML = `⏰ ${relativeTime}`;
+                }
+            });
+        }
+
+        // Add copy functionality to package install commands
+        document.addEventListener('DOMContentLoaded', () => {
+            const packageInstalls = document.querySelectorAll('.package-install');
+            packageInstalls.forEach(install => {
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.textContent = 'Copy';
+                btn.onclick = () => copyCommand(btn);
+                install.appendChild(btn);
+
+                // Store the command in data attribute for copying
+                const command = install.querySelector('code').textContent;
+                install.setAttribute('data-command', command);
+            });
+
+            // Update package times initially and every minute
+            updatePackageTimes();
+            setInterval(updatePackageTimes, 60000);
+        });
+    </script>
+</body>
+</html>
