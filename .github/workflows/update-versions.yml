@@ -64,9 +64,7 @@ jobs:
           UPDATED_PACKAGES=$(git diff HEAD~1 packages.yaml | grep '^+.*version:' | wc -l)
           if [[ $UPDATED_PACKAGES -gt 0 ]]; then
             # Create a more descriptive commit message
-            git commit -m "chore: update package versions and regenerate PKGBUILDs
-
-🤖 Generated with new metadata-driven system"
+            git commit -m "chore: update package versions and regenerate PKGBUILDs"
           else
             git commit -m "chore: update package metadata and PKGBUILDs"
           fi
