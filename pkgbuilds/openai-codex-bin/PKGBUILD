@@ -19,7 +19,13 @@ prepare() {
   local ver="${pkgver}"
   local tag="rust-v${ver}"
 
-  local url="$(curl -fsSL "https://api.github.com/repos/openai/codex/releases/tags/${tag}" \
+  # Set up authentication headers if GITHUB_TOKEN is available
+  local auth_header=""
+  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    auth_header="-H \"Authorization: Bearer ${GITHUB_TOKEN}\""
+  fi
+
+  local url="$(eval curl -fsSL ${auth_header} "https://api.github.com/repos/openai/codex/releases/tags/${tag}" \
     | jq -r '.assets[] | select(.name | contains("x86_64-unknown-linux-gnu")) | .browser_download_url' \
     | head -n1)"
 

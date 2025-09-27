@@ -29,7 +29,13 @@ prepare() {
   local ver="${pkgver}"
   local tag="{{ upstream.tag_prefix }}${ver}"
 
-  local url="$(curl -fsSL "https://api.github.com/repos/{{ upstream.repo }}/releases/tags/${tag}" \
+  # Set up authentication headers if GITHUB_TOKEN is available
+  local auth_header=""
+  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+    auth_header="-H \"Authorization: Bearer ${GITHUB_TOKEN}\""
+  fi
+
+  local url="$(eval curl -fsSL ${auth_header} "https://api.github.com/repos/{{ upstream.repo }}/releases/tags/${tag}" \
     | jq -r '.assets[] | select(.name | contains("{{ upstream.asset_pattern }}")) | .browser_download_url' \
     | head -n1)"
 

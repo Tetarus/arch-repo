@@ -61,11 +61,13 @@ jobs:
           chown -R builder:builder .
 
       - name: Build package ${{ matrix.package }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd pkgbuilds/${{ matrix.package }}
 
-          # Build package as builder user
-          sudo -u builder makepkg -s --noconfirm --needed
+          # Build package as builder user with GITHUB_TOKEN passed through
+          sudo -u builder env GITHUB_TOKEN="${GITHUB_TOKEN}" makepkg -s --noconfirm --needed
 
           # List generated packages
           ls -la *.pkg.tar.zst
