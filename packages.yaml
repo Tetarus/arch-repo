@@ -31,7 +31,7 @@ packages:
     description: Claude Code - Interactive CLI for Anthropic's Claude AI assistant
     license: custom
     url: https://claude.ai/code
-    version: 2.0.0
+    version: 2.0.1
     pkgrel: 1
     architectures:
     - x86_64
