@@ -1,6 +1,6 @@
 # Maintainer: Tetarus
 pkgname=claude-code-bin
-pkgver=2.0.1
+pkgver=2.0.5
 pkgrel=1
 pkgdesc="Claude Code - Interactive CLI for Anthropic's Claude AI assistant"
 arch=('x86_64')
