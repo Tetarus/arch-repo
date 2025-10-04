@@ -1,6 +1,6 @@
 # Maintainer: Tetarus
 pkgname=openai-codex-bin
-pkgver=0.42.0
+pkgver=0.44.0
 pkgrel=1
 pkgdesc="Lightweight coding agent that runs in your terminal (binary release)"
 arch=('x86_64')
